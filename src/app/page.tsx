@@ -2,9 +2,9 @@
 
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 
 // 客户端收藏 API
 import {
@@ -23,14 +23,47 @@ import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 
-// 主内容区大型 KatelyaTV Logo 组件 - 已清空内容
-const MainKatelyaLogo = () => {
-  return null; // 返回空内容
+// 自定义防抖Hook
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 };
 
-// KatelyaTV 底部 Logo 组件 - 已清空内容
-const BottomKatelyaLogo = () => {
-  return null; // 返回空内容
+// 搜索组件
+const SearchBar = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  return (
+    <div className="w-full max-w-2xl mx-auto mb-8">
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-400" />
+        </div>
+        <input
+          type="text"
+          placeholder="搜索电影、剧集、综艺..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl bg-white/80 backdrop-blur-sm 
+                   placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                   dark:bg-gray-800/80 dark:border-gray-600 dark:text-white dark:placeholder-gray-400
+                   transition-all duration-200 text-lg"
+        />
+      </div>
+    </div>
+  );
 };
 
 function HomeClient() {
@@ -40,8 +73,11 @@ function HomeClient() {
   const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { announcement } = useSite();
-
   const [showAnnouncement, setShowAnnouncement] = useState(false);
+
+  // 搜索相关状态
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   // 检查公告弹窗状态
   useEffect(() => {
@@ -74,7 +110,6 @@ function HomeClient() {
       try {
         setLoading(true);
 
-        // 并行获取热门电影、热门剧集和热门综艺
         const [moviesData, tvShowsData, varietyShowsData] = await Promise.all([
           getDoubanCategories({
             kind: 'movie',
@@ -88,16 +123,14 @@ function HomeClient() {
         if (moviesData.code === 200) {
           setHotMovies(moviesData.list);
         }
-
         if (tvShowsData.code === 200) {
           setHotTvShows(tvShowsData.list);
         }
-
         if (varietyShowsData.code === 200) {
           setHotVarietyShows(varietyShowsData.list);
         }
       } catch (error) {
-        // 静默处理错误，避免控制台警告
+        // 静默处理错误
       } finally {
         setLoading(false);
       }
@@ -110,7 +143,6 @@ function HomeClient() {
   const updateFavoriteItems = async (allFavorites: Record<string, Favorite>) => {
     const allPlayRecords = await getAllPlayRecords();
 
-    // 根据保存时间排序（从近到远）
     const sorted = Object.entries(allFavorites)
       .sort(([, a], [, b]) => b.save_time - a.save_time)
       .map(([key, fav]) => {
@@ -118,7 +150,6 @@ function HomeClient() {
         const source = key.slice(0, plusIndex);
         const id = key.slice(plusIndex + 1);
 
-        // 查找对应的播放记录，获取当前集数
         const playRecord = allPlayRecords[key];
         const currentEpisode = playRecord?.index;
 
@@ -148,7 +179,6 @@ function HomeClient() {
 
     loadFavorites();
 
-    // 监听收藏更新事件
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
       (newFavorites: Record<string, Favorite>) => {
@@ -159,14 +189,76 @@ function HomeClient() {
     return unsubscribe;
   }, [activeTab]);
 
+  // 搜索功能实现
+  const filteredFavorites = useMemo(() => {
+    if (!debouncedSearchQuery || activeTab !== 'favorites') {
+      return favoriteItems;
+    }
+
+    const query = debouncedSearchQuery.toLowerCase();
+    return favoriteItems.filter(item =>
+      item.title.toLowerCase().includes(query) ||
+      item.search_title?.toLowerCase().includes(query) ||
+      item.source_name.toLowerCase().includes(query)
+    );
+  }, [favoriteItems, debouncedSearchQuery, activeTab]);
+
+  const filteredMovies = useMemo(() => {
+    if (!debouncedSearchQuery || activeTab !== 'home') {
+      return hotMovies.slice(0, 10);
+    }
+
+    const query = debouncedSearchQuery.toLowerCase();
+    return hotMovies.filter(movie =>
+      movie.title.toLowerCase().includes(query) ||
+      movie.rate?.toString().includes(query)
+    ).slice(0, 10);
+  }, [hotMovies, debouncedSearchQuery, activeTab]);
+
+  const filteredTvShows = useMemo(() => {
+    if (!debouncedSearchQuery || activeTab !== 'home') {
+      return hotTvShows.slice(0, 10);
+    }
+
+    const query = debouncedSearchQuery.toLowerCase();
+    return hotTvShows.filter(show =>
+      show.title.toLowerCase().includes(query) ||
+      show.rate?.toString().includes(query)
+    ).slice(0, 10);
+  }, [hotTvShows, debouncedSearchQuery, activeTab]);
+
+  const filteredVarietyShows = useMemo(() => {
+    if (!debouncedSearchQuery || activeTab !== 'home') {
+      return hotVarietyShows.slice(0, 10);
+    }
+
+    const query = debouncedSearchQuery.toLowerCase();
+    return hotVarietyShows.filter(show =>
+      show.title.toLowerCase().includes(query) ||
+      show.rate?.toString().includes(query)
+    ).slice(0, 10);
+  }, [hotVarietyShows, debouncedSearchQuery, activeTab]);
+
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
     localStorage.setItem('hasSeenAnnouncement', announcement);
   };
 
+  const hasSearchResults = debouncedSearchQuery && (
+    (activeTab === 'favorites' && filteredFavorites.length > 0) ||
+    (activeTab === 'home' && (
+      filteredMovies.length > 0 ||
+      filteredTvShows.length > 0 ||
+      filteredVarietyShows.length > 0
+    ))
+  );
+
   return (
     <PageLayout>
       <div className='px-4 sm:px-8 lg:px-12 py-4 sm:py-8 overflow-visible'>
+        {/* 搜索栏 - 替换原来的Logo位置 */}
+        <SearchBar />
+
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
           <CapsuleSwitch
@@ -175,9 +267,29 @@ function HomeClient() {
               { label: '收藏夹', value: 'favorites' },
             ]}
             active={activeTab}
-            onChange={(value) => setActiveTab(value as 'home' | 'favorites')}
+            onChange={(value) => {
+              setActiveTab(value as 'home' | 'favorites');
+              setSearchQuery(''); // 切换tab时清空搜索
+            }}
           />
         </div>
+
+        {/* 搜索状态显示 */}
+        {debouncedSearchQuery && (
+          <div className="text-center mb-6">
+            <p className="text-gray-600 dark:text-gray-300">
+              搜索关键词: <span className="font-semibold text-purple-600 dark:text-purple-400">"{debouncedSearchQuery}"</span>
+              {hasSearchResults && (
+                <span className="ml-2 text-sm text-green-600 dark:text-green-400">
+                  {activeTab === 'favorites' 
+                    ? `找到 ${filteredFavorites.length} 个收藏`
+                    : `找到 ${filteredMovies.length + filteredTvShows.length + filteredVarietyShows.length} 个结果`
+                  }
+                </span>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* 主内容区域 */}
         <div className='w-full max-w-none mx-auto'>
@@ -187,9 +299,9 @@ function HomeClient() {
               <section className='mb-8'>
                 <div className='mb-4 flex items-center justify-between'>
                   <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    我的收藏
+                    {debouncedSearchQuery ? '搜索结果' : '我的收藏'}
                   </h2>
-                  {favoriteItems.length > 0 && (
+                  {favoriteItems.length > 0 && !debouncedSearchQuery && (
                     <button
                       className='text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
                       onClick={async () => {
@@ -202,7 +314,7 @@ function HomeClient() {
                   )}
                 </div>
                 <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-6 lg:gap-x-8 justify-items-center'>
-                  {favoriteItems.map((item) => (
+                  {filteredFavorites.map((item) => (
                     <div
                       key={item.id + item.source}
                       className='w-full max-w-44'
@@ -215,9 +327,9 @@ function HomeClient() {
                       />
                     </div>
                   ))}
-                  {favoriteItems.length === 0 && (
+                  {filteredFavorites.length === 0 && (
                     <div className='col-span-full text-center text-gray-500 py-8 dark:text-gray-400'>
-                      暂无收藏内容
+                      {debouncedSearchQuery ? '未找到匹配的收藏内容' : '暂无收藏内容'}
                     </div>
                   )}
                 </div>
@@ -227,158 +339,161 @@ function HomeClient() {
             // 首页视图
             <>
               {/* 继续观看 */}
-              <ContinueWatching />
+              {!debouncedSearchQuery && <ContinueWatching />}
 
               {/* 热门电影 */}
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    热门电影
-                  </h2>
-                  <Link
-                    href='/douban?type=movie'
-                    className='flex items-center text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
-                <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
-                  {loading
-                    ? Array.from({ length: 10 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='w-full'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
-                            <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
+              {(filteredMovies.length > 0 || !debouncedSearchQuery) && (
+                <section className='mb-8'>
+                  <div className='mb-4 flex items-center justify-between'>
+                    <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                      热门电影
+                    </h2>
+                    {!debouncedSearchQuery && (
+                      <Link
+                        href='/douban?type=movie'
+                        className='flex items-center text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
+                      >
+                        查看更多
+                        <ChevronRight className='w-4 h-4 ml-1' />
+                      </Link>
+                    )}
+                  </div>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
+                    {loading
+                      ? Array.from({ length: 10 }).map((_, index) => (
+                          <div key={index} className='w-full'>
+                            <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
+                              <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
+                            </div>
+                            <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                           </div>
-                          <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
-                        </div>
-                      ))
-                    : hotMovies.slice(0, 10).map((movie, index) => (
-                        <div
-                          key={index}
-                          className='w-full'
-                        >
-                          <VideoCard
-                            from='douban'
-                            title={movie.title}
-                            poster={movie.poster}
-                            douban_id={movie.id}
-                            rate={movie.rate}
-                            year={movie.year}
-                            type='movie'
-                          />
-                        </div>
-                      ))}
-                </div>
-              </section>
+                        ))
+                      : filteredMovies.map((movie, index) => (
+                          <div key={index} className='w-full'>
+                            <VideoCard
+                              from='douban'
+                              title={movie.title}
+                              poster={movie.poster}
+                              douban_id={movie.id}
+                              rate={movie.rate}
+                              year={movie.year}
+                              type='movie'
+                            />
+                          </div>
+                        ))}
+                  </div>
+                </section>
+              )}
 
               {/* 热门剧集 */}
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    热门剧集
-                  </h2>
-                  <Link
-                    href='/douban?type=tv'
-                    className='flex items-center text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
-                <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
-                  {loading
-                    ? Array.from({ length: 10 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='w-full'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
-                            <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
+              {(filteredTvShows.length > 0 || !debouncedSearchQuery) && (
+                <section className='mb-8'>
+                  <div className='mb-4 flex items-center justify-between'>
+                    <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                      热门剧集
+                    </h2>
+                    {!debouncedSearchQuery && (
+                      <Link
+                        href='/douban?type=tv'
+                        className='flex items-center text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
+                      >
+                        查看更多
+                        <ChevronRight className='w-4 h-4 ml-1' />
+                      </Link>
+                    )}
+                  </div>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
+                    {loading
+                      ? Array.from({ length: 10 }).map((_, index) => (
+                          <div key={index} className='w-full'>
+                            <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
+                              <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
+                            </div>
+                            <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                           </div>
-                          <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
-                        </div>
-                      ))
-                    : hotTvShows.slice(0, 10).map((show, index) => (
-                        <div
-                          key={index}
-                          className='w-full'
-                        >
-                          <VideoCard
-                            from='douban'
-                            title={show.title}
-                            poster={show.poster}
-                            douban_id={show.id}
-                            rate={show.rate}
-                            year={show.year}
-                          />
-                        </div>
-                      ))}
-                </div>
-              </section>
+                        ))
+                      : filteredTvShows.map((show, index) => (
+                          <div key={index} className='w-full'>
+                            <VideoCard
+                              from='douban'
+                              title={show.title}
+                              poster={show.poster}
+                              douban_id={show.id}
+                              rate={show.rate}
+                              year={show.year}
+                            />
+                          </div>
+                        ))}
+                  </div>
+                </section>
+              )}
 
               {/* 热门综艺 */}
-              <section className='mb-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                    热门综艺
-                  </h2>
-                  <Link
-                    href='/douban?type=show'
-                    className='flex items-center text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
-                  >
-                    查看更多
-                    <ChevronRight className='w-4 h-4 ml-1' />
-                  </Link>
-                </div>
-                <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
-                  {loading
-                    ? Array.from({ length: 10 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className='w-full'
-                        >
-                          <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
-                            <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
+              {(filteredVarietyShows.length > 0 || !debouncedSearchQuery) && (
+                <section className='mb-8'>
+                  <div className='mb-4 flex items-center justify-between'>
+                    <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+                      热门综艺
+                    </h2>
+                    {!debouncedSearchQuery && (
+                      <Link
+                        href='/douban?type=show'
+                        className='flex items-center text-sm text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 transition-colors'
+                      >
+                        查看更多
+                        <ChevronRight className='w-4 h-4 ml-1' />
+                      </Link>
+                    )}
+                  </div>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
+                    {loading
+                      ? Array.from({ length: 10 }).map((_, index) => (
+                          <div key={index} className='w-full'>
+                            <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
+                              <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
+                            </div>
+                            <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                           </div>
-                          <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
-                        </div>
-                      ))
-                    : hotVarietyShows.slice(0, 10).map((show, index) => (
-                        <div
-                          key={index}
-                          className='w-full'
-                        >
-                          <VideoCard
-                            from='douban'
-                            title={show.title}
-                            poster={show.poster}
-                            douban_id={show.id}
-                            rate={show.rate}
-                            year={show.year}
-                          />
-                        </div>
-                      ))}
+                        ))
+                      : filteredVarietyShows.map((show, index) => (
+                          <div key={index} className='w-full'>
+                            <VideoCard
+                              from='douban'
+                              title={show.title}
+                              poster={show.poster}
+                              douban_id={show.id}
+                              rate={show.rate}
+                              year={show.year}
+                            />
+                          </div>
+                        ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 无搜索结果提示 */}
+              {debouncedSearchQuery && !hasSearchResults && (
+                <div className="text-center py-12">
+                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍</div>
+                  <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
+                    未找到匹配的内容
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-500">
+                    尝试使用其他关键词搜索，或浏览全部内容
+                  </p>
                 </div>
-              </section>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {/* 公告弹窗（保持不变） */}
       {announcement && showAnnouncement && (
-        <div
-          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${
-            showAnnouncement ? '' : 'opacity-0 pointer-events-none'
-          }`}
-        >
+        <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${showAnnouncement ? '' : 'opacity-0 pointer-events-none'}`}>
           <div className='w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900 transform transition-all duration-300 hover:shadow-2xl'>
             <div className='flex justify-between items-start mb-4'>
-              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-purple-500 pb-1'>
-                提示
-              </h3>
+              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-purple-500 pb-1'>提示</h3>
               <button
                 onClick={() => handleCloseAnnouncement(announcement)}
                 className='text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-white transition-colors'
@@ -388,9 +503,7 @@ function HomeClient() {
             <div className='mb-6'>
               <div className='relative overflow-hidden rounded-lg mb-4 bg-purple-50 dark:bg-purple-900/20'>
                 <div className='absolute inset-y-0 left-0 w-1.5 bg-purple-500 dark:bg-purple-400'></div>
-                <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>
-                  {announcement}
-                </p>
+                <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>{announcement}</p>
               </div>
             </div>
             <button
