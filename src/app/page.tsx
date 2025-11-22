@@ -26,10 +26,6 @@ import VideoCard from '@/components/VideoCard';
 const MainKatelyaLogo = () => {
   return (
     <div className='main-logo-container'>
-      {/* 背景光效 */}
-     {/* 主 Logo */}
-    <div className='main-katelya-logo'></div>
-
       {/* 副标题 */}
       <div className='mt-3 text-center'>
         <div className='main-logo-subtitle'></div>
