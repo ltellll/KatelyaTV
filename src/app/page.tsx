@@ -24,7 +24,7 @@ import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 // 主内容区大型 KatelyaTV Logo 组件
 const MainKatelyaLogo = () => {
-  return (
+ // return (
     <div className='main-logo-container'>
       {/* 背景光效 */}   
 
@@ -43,7 +43,7 @@ const MainKatelyaLogo = () => {
 
 // KatelyaTV 底部 Logo 组件
 const BottomKatelyaLogo = () => {
-  return (
+  //return (
     <div className='bottom-logo-container'>
       {/* 浮动几何形状装饰 */}
       <div className='floating-shapes'>
