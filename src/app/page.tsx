@@ -27,8 +27,6 @@ const MainKatelyaLogo = () => {
   return (
     <div className='main-logo-container'>
       {/* 背景光效 */}
-      <div className='logo-background-glow'></div>
-
      {/* 主 Logo */}
     <div className='main-katelya-logo'></div>
 
