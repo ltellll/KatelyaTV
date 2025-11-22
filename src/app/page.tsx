@@ -97,6 +97,56 @@ const SearchBar = ({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
   );
 };
 
+// 主内容区大型 KatelyaTV Logo 组件
+const MainKatelyaLogo = () => {
+  return (
+    <div className='main-logo-container'>
+      {/* 背景光效 */}
+      <div className='logo-background-glow'></div>
+
+      {/* 主 Logo */}
+      <div className='main-katelya-logo'>KatelyaTV</div>
+
+      {/* 副标题 */}
+      <div className='mt-3 text-center'>
+        <div className='main-logo-subtitle'>极致影视体验，尽在指尖</div>
+      </div>
+
+      {/* 装饰性粒子效果 */}
+      <div className='logo-particles'>
+        <div className='particle particle-1'></div>
+        <div className='particle particle-2'></div>
+        <div className='particle particle-3'></div>
+        <div className='particle particle-4'></div>
+        <div className='particle particle-5'></div>
+        <div className='particle particle-6'></div>
+      </div>
+    </div>
+  );
+};
+
+// KatelyaTV 底部 Logo 组件
+const BottomKatelyaLogo = () => {
+  return (
+    <div className='bottom-logo-container'>
+      {/* 浮动几何形状装饰 */}
+      <div className='floating-shapes'>
+        <div className='shape'></div>
+        <div className='shape'></div>
+        <div className='shape'></div>
+        <div className='shape'></div>
+      </div>
+
+      <div className='text-center'>
+        <div className='bottom-logo'>KatelyaTV</div>
+        <div className='mt-2 text-sm text-gray-500 dark:text-gray-400 opacity-75'>
+          Powered by KatelyaTV Core
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function HomeClient() {
   const [activeTab, setActiveTab] = useState<'home' | 'favorites'>('home');
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
@@ -104,6 +154,7 @@ function HomeClient() {
   const [hotVarietyShows, setHotVarietyShows] = useState<DoubanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { announcement } = useSite();
+
   const [showAnnouncement, setShowAnnouncement] = useState(false);
 
   // 搜索相关状态
@@ -141,6 +192,7 @@ function HomeClient() {
       try {
         setLoading(true);
 
+        // 并行获取热门电影、热门剧集和热门综艺
         const [moviesData, tvShowsData, varietyShowsData] = await Promise.all([
           getDoubanCategories({
             kind: 'movie',
@@ -154,14 +206,17 @@ function HomeClient() {
         if (moviesData.code === 200) {
           setHotMovies(moviesData.list);
         }
+
         if (tvShowsData.code === 200) {
           setHotTvShows(tvShowsData.list);
         }
+
         if (varietyShowsData.code === 200) {
           setHotVarietyShows(varietyShowsData.list);
         }
       } catch (error) {
-        // 静默处理错误
+        // 静默处理错误，避免控制台警告
+        // console.error('获取豆瓣数据失败:', error);
       } finally {
         setLoading(false);
       }
@@ -174,6 +229,7 @@ function HomeClient() {
   const updateFavoriteItems = async (allFavorites: Record<string, Favorite>) => {
     const allPlayRecords = await getAllPlayRecords();
 
+    // 根据保存时间排序（从近到远）
     const sorted = Object.entries(allFavorites)
       .sort(([, a], [, b]) => b.save_time - a.save_time)
       .map(([key, fav]) => {
@@ -181,6 +237,7 @@ function HomeClient() {
         const source = key.slice(0, plusIndex);
         const id = key.slice(plusIndex + 1);
 
+        // 查找对应的播放记录，获取当前集数
         const playRecord = allPlayRecords[key];
         const currentEpisode = playRecord?.index;
 
@@ -210,6 +267,7 @@ function HomeClient() {
 
     loadFavorites();
 
+    // 监听收藏更新事件
     const unsubscribe = subscribeToDataUpdates(
       'favoritesUpdated',
       (newFavorites: Record<string, Favorite>) => {
@@ -272,7 +330,7 @@ function HomeClient() {
 
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
-    localStorage.setItem('hasSeenAnnouncement', announcement);
+    localStorage.setItem('hasSeenAnnouncement', announcement); // 记录已查看弹窗
   };
 
   const hasSearchResults = debouncedSearchQuery && (
@@ -287,8 +345,11 @@ function HomeClient() {
   return (
     <PageLayout>
       <div className='px-4 sm:px-8 lg:px-12 py-4 sm:py-8 overflow-visible'>
-        {/* 搜索栏 - 替换原来的Logo位置 */}
+        {/* 搜索栏 - 添加在Logo上方 */}
         <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+
+        {/* 主内容区大型 KatelyaTV Logo - 仅在首页显示 */}
+        {activeTab === 'home' && <MainKatelyaLogo />}
 
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
@@ -322,7 +383,7 @@ function HomeClient() {
           </div>
         )}
 
-        {/* 主内容区域 */}
+        {/* 主内容区域 - 优化为完全居中布局 */}
         <div className='w-full max-w-none mx-auto'>
           {activeTab === 'favorites' ? (
             // 收藏夹视图
@@ -344,6 +405,7 @@ function HomeClient() {
                     </button>
                   )}
                 </div>
+                {/* 优化收藏夹网格布局，确保在新的居中布局下完美对齐 */}
                 <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-6 lg:gap-x-8 justify-items-center'>
                   {filteredFavorites.map((item) => (
                     <div
@@ -365,6 +427,9 @@ function HomeClient() {
                   )}
                 </div>
               </section>
+
+              {/* 收藏夹页面底部 Logo */}
+              {!debouncedSearchQuery && <BottomKatelyaLogo />}
             </>
           ) : (
             // 首页视图
@@ -391,16 +456,24 @@ function HomeClient() {
                   </div>
                   <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
                     {loading
-                      ? Array.from({ length: 10 }).map((_, index) => (
-                          <div key={index} className='w-full'>
+                      ? // 加载状态显示灰色占位数据 (显示10个，2行x5列)
+                        Array.from({ length: 10 }).map((_, index) => (
+                          <div
+                            key={index}
+                            className='w-full'
+                          >
                             <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
                               <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
                             </div>
                             <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                           </div>
                         ))
-                      : filteredMovies.map((movie, index) => (
-                          <div key={index} className='w-full'>
+                      : // 显示真实数据，只显示前10个实现2行布局
+                        filteredMovies.map((movie, index) => (
+                          <div
+                            key={index}
+                            className='w-full'
+                          >
                             <VideoCard
                               from='douban'
                               title={movie.title}
@@ -435,16 +508,24 @@ function HomeClient() {
                   </div>
                   <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
                     {loading
-                      ? Array.from({ length: 10 }).map((_, index) => (
-                          <div key={index} className='w-full'>
+                      ? // 加载状态显示灰色占位数据 (显示10个，2行x5列)
+                        Array.from({ length: 10 }).map((_, index) => (
+                          <div
+                            key={index}
+                            className='w-full'
+                          >
                             <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
                               <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
                             </div>
                             <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                           </div>
                         ))
-                      : filteredTvShows.map((show, index) => (
-                          <div key={index} className='w-full'>
+                      : // 显示真实数据，只显示前10个实现2行布局
+                        filteredTvShows.map((show, index) => (
+                          <div
+                            key={index}
+                            className='w-full'
+                          >
                             <VideoCard
                               from='douban'
                               title={show.title}
@@ -478,16 +559,24 @@ function HomeClient() {
                   </div>
                   <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
                     {loading
-                      ? Array.from({ length: 10 }).map((_, index) => (
-                          <div key={index} className='w-full'>
+                      ? // 加载状态显示灰色占位数据 (显示10个，2行x5列)
+                        Array.from({ length: 10 }).map((_, index) => (
+                          <div
+                            key={index}
+                            className='w-full'
+                          >
                             <div className='relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-purple-200 animate-pulse dark:bg-purple-800'>
                               <div className='absolute inset-0 bg-purple-300 dark:bg-purple-700'></div>
                             </div>
                             <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                           </div>
                         ))
-                      : filteredVarietyShows.map((show, index) => (
-                          <div key={index} className='w-full'>
+                      : // 显示真实数据，只显示前10个实现2行布局
+                        filteredVarietyShows.map((show, index) => (
+                          <div
+                            key={index}
+                            className='w-full'
+                          >
                             <VideoCard
                               from='douban'
                               title={show.title}
@@ -505,7 +594,7 @@ function HomeClient() {
               {/* 无搜索结果提示 */}
               {debouncedSearchQuery && !hasSearchResults && (
                 <div className="text-center py-12">
-                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍🔍</div>
+                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍</div>
                   <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
                     未找到匹配的内容
                   </h3>
@@ -514,17 +603,24 @@ function HomeClient() {
                   </p>
                 </div>
               )}
+
+              {/* 首页底部 Logo */}
+              {!debouncedSearchQuery && <BottomKatelyaLogo />}
             </>
           )}
         </div>
       </div>
-
-      {/* 公告弹窗（保持不变） */}
       {announcement && showAnnouncement && (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${showAnnouncement ? '' : 'opacity-0 pointer-events-none'}`}>
+        <div
+          className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-black/70 p-4 transition-opacity duration-300 ${
+            showAnnouncement ? '' : 'opacity-0 pointer-events-none'
+          }`}
+        >
           <div className='w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900 transform transition-all duration-300 hover:shadow-2xl'>
             <div className='flex justify-between items-start mb-4'>
-              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-purple-500 pb-1'>提示</h3>
+              <h3 className='text-2xl font-bold tracking-tight text-gray-800 dark:text-white border-b border-purple-500 pb-1'>
+                提示
+              </h3>
               <button
                 onClick={() => handleCloseAnnouncement(announcement)}
                 className='text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-white transition-colors'
@@ -534,7 +630,9 @@ function HomeClient() {
             <div className='mb-6'>
               <div className='relative overflow-hidden rounded-lg mb-4 bg-purple-50 dark:bg-purple-900/20'>
                 <div className='absolute inset-y-0 left-0 w-1.5 bg-purple-500 dark:bg-purple-400'></div>
-                <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>{announcement}</p>
+                <p className='ml-4 text-gray-600 dark:text-gray-300 leading-relaxed'>
+                  {announcement}
+                </p>
               </div>
             </div>
             <button
