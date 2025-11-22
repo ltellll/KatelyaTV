@@ -24,11 +24,26 @@ import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 // 主内容区大型 KatelyaTV Logo 组件
 const MainKatelyaLogo = () => {
+        {/* 装饰性粒子效果 */}
+      <div className='logo-particles'>
+        <div className='particle particle-1'></div>
+        <div className='particle particle-2'></div>
+        <div className='particle particle-3'></div>
+        <div className='particle particle-4'></div>
+        <div className='particle particle-5'></div>
+        <div className='particle particle-6'></div>
+      </div>
 };
 
 // KatelyaTV 底部 Logo 组件
 const BottomKatelyaLogo = () => {
-
+      {/* 浮动几何形状装饰 */}
+      <div className='floating-shapes'>
+        <div className='shape'></div>
+        <div className='shape'></div>
+        <div className='shape'></div>
+        <div className='shape'></div>
+      </div>
 };
 
 function HomeClient() {
