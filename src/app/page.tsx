@@ -22,28 +22,15 @@ import ContinueWatching from '@/components/ContinueWatching';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
-// 主内容区大型 KatelyaTV Logo 组件
+
+// 主内容区大型 KatelyaTV Logo 组件 - 已清空内容
 const MainKatelyaLogo = () => {
-        {/* 装饰性粒子效果 */}
-      <div className='logo-particles'>
-        <div className='particle particle-1'></div>
-        <div className='particle particle-2'></div>
-        <div className='particle particle-3'></div>
-        <div className='particle particle-4'></div>
-        <div className='particle particle-5'></div>
-        <div className='particle particle-6'></div>
-      </div>
+  return null; // 返回空内容
 };
 
-// KatelyaTV 底部 Logo 组件
+// KatelyaTV 底部 Logo 组件 - 已清空内容
 const BottomKatelyaLogo = () => {
-      {/* 浮动几何形状装饰 */}
-      <div className='floating-shapes'>
-        <div className='shape'></div>
-        <div className='shape'></div>
-        <div className='shape'></div>
-        <div className='shape'></div>
-      </div>
+  return null; // 返回空内容
 };
 
 function HomeClient() {
@@ -55,7 +42,6 @@ function HomeClient() {
   const { announcement } = useSite();
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
-
 
   // 检查公告弹窗状态
   useEffect(() => {
@@ -112,7 +98,6 @@ function HomeClient() {
         }
       } catch (error) {
         // 静默处理错误，避免控制台警告
-        // console.error('获取豆瓣数据失败:', error);
       } finally {
         setLoading(false);
       }
@@ -176,15 +161,12 @@ function HomeClient() {
 
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
-    localStorage.setItem('hasSeenAnnouncement', announcement); // 记录已查看弹窗
+    localStorage.setItem('hasSeenAnnouncement', announcement);
   };
 
   return (
     <PageLayout>
       <div className='px-4 sm:px-8 lg:px-12 py-4 sm:py-8 overflow-visible'>
-        {/* 主内容区大型 KatelyaTV Logo - 仅在首页显示 */}
-        {activeTab === 'home' && <MainKatelyaLogo />}
-
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
           <CapsuleSwitch
@@ -197,7 +179,7 @@ function HomeClient() {
           />
         </div>
 
-        {/* 主内容区域 - 优化为完全居中布局 */}
+        {/* 主内容区域 */}
         <div className='w-full max-w-none mx-auto'>
           {activeTab === 'favorites' ? (
             // 收藏夹视图
@@ -219,7 +201,6 @@ function HomeClient() {
                     </button>
                   )}
                 </div>
-                {/* 优化收藏夹网格布局，确保在新的居中布局下完美对齐 */}
                 <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-6 lg:gap-x-8 justify-items-center'>
                   {favoriteItems.map((item) => (
                     <div
@@ -241,9 +222,6 @@ function HomeClient() {
                   )}
                 </div>
               </section>
-
-              {/* 收藏夹页面底部 Logo */}
-              <BottomKatelyaLogo />
             </>
           ) : (
             // 首页视图
@@ -267,8 +245,7 @@ function HomeClient() {
                 </div>
                 <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
                   {loading
-                    ? // 加载状态显示灰色占位数据 (显示10个，2行x5列)
-                      Array.from({ length: 10 }).map((_, index) => (
+                    ? Array.from({ length: 10 }).map((_, index) => (
                         <div
                           key={index}
                           className='w-full'
@@ -279,8 +256,7 @@ function HomeClient() {
                           <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                         </div>
                       ))
-                    : // 显示真实数据，只显示前10个实现2行布局
-                      hotMovies.slice(0, 10).map((movie, index) => (
+                    : hotMovies.slice(0, 10).map((movie, index) => (
                         <div
                           key={index}
                           className='w-full'
@@ -315,8 +291,7 @@ function HomeClient() {
                 </div>
                 <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
                   {loading
-                    ? // 加载状态显示灰色占位数据 (显示10个，2行x5列)
-                      Array.from({ length: 10 }).map((_, index) => (
+                    ? Array.from({ length: 10 }).map((_, index) => (
                         <div
                           key={index}
                           className='w-full'
@@ -327,8 +302,7 @@ function HomeClient() {
                           <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                         </div>
                       ))
-                    : // 显示真实数据，只显示前10个实现2行布局
-                      hotTvShows.slice(0, 10).map((show, index) => (
+                    : hotTvShows.slice(0, 10).map((show, index) => (
                         <div
                           key={index}
                           className='w-full'
@@ -362,8 +336,7 @@ function HomeClient() {
                 </div>
                 <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4'>
                   {loading
-                    ? // 加载状态显示灰色占位数据 (显示10个，2行x5列)
-                      Array.from({ length: 10 }).map((_, index) => (
+                    ? Array.from({ length: 10 }).map((_, index) => (
                         <div
                           key={index}
                           className='w-full'
@@ -374,8 +347,7 @@ function HomeClient() {
                           <div className='mt-2 h-4 bg-purple-200 rounded animate-pulse dark:bg-purple-800'></div>
                         </div>
                       ))
-                    : // 显示真实数据，只显示前10个实现2行布局
-                      hotVarietyShows.slice(0, 10).map((show, index) => (
+                    : hotVarietyShows.slice(0, 10).map((show, index) => (
                         <div
                           key={index}
                           className='w-full'
@@ -392,9 +364,6 @@ function HomeClient() {
                       ))}
                 </div>
               </section>
-
-              {/* 首页底部 Logo */}
-              <BottomKatelyaLogo />
             </>
           )}
         </div>
