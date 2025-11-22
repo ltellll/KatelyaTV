@@ -25,11 +25,7 @@ import VideoCard from '@/components/VideoCard';
 // 主内容区大型 KatelyaTV Logo 组件
 const MainKatelyaLogo = () => {
   return (
-    <div className='main-logo-container'>
-      {/* 副标题 */}
-      <div className='mt-3 text-center'>
-        <div className='main-logo-subtitle'></div>
-      </div>
+   
 
       {/* 装饰性粒子效果 */}
       <div className='logo-particles'>
