@@ -434,7 +434,7 @@ function HomeClient() {
           ) : (
             // 首页视图
             <>
-              {/* 继续观看 */}
+              {/* 继续观看 - 从文档2中整合过来 */}
               {!debouncedSearchQuery && <ContinueWatching />}
 
               {/* 热门电影 */}
@@ -594,7 +594,7 @@ function HomeClient() {
               {/* 无搜索结果提示 */}
               {debouncedSearchQuery && !hasSearchResults && (
                 <div className="text-center py-12">
-                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍</div>
+                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍🔍</div>
                   <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
                     未找到匹配的内容
                   </h3>
