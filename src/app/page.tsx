@@ -97,56 +97,6 @@ const SearchBar = ({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
   );
 };
 
-// 主内容区大型 KatelyaTV Logo 组件
-const MainKatelyaLogo = () => {
-  return (
-    <div className='main-logo-container'>
-      {/* 背景光效 */}
-      <div className='logo-background-glow'></div>
-
-      {/* 主 Logo */}
-      <div className='main-katelya-logo'>KatelyaTV</div>
-
-      {/* 副标题 */}
-      <div className='mt-3 text-center'>
-        <div className='main-logo-subtitle'>极致影视体验，尽在指尖</div>
-      </div>
-
-      {/* 装饰性粒子效果 */}
-      <div className='logo-particles'>
-        <div className='particle particle-1'></div>
-        <div className='particle particle-2'></div>
-        <div className='particle particle-3'></div>
-        <div className='particle particle-4'></div>
-        <div className='particle particle-5'></div>
-        <div className='particle particle-6'></div>
-      </div>
-    </div>
-  );
-};
-
-// KatelyaTV 底部 Logo 组件
-const BottomKatelyaLogo = () => {
-  return (
-    <div className='bottom-logo-container'>
-      {/* 浮动几何形状装饰 */}
-      <div className='floating-shapes'>
-        <div className='shape'></div>
-        <div className='shape'></div>
-        <div className='shape'></div>
-        <div className='shape'></div>
-      </div>
-
-      <div className='text-center'>
-        <div className='bottom-logo'>KatelyaTV</div>
-        <div className='mt-2 text-sm text-gray-500 dark:text-gray-400 opacity-75'>
-          Powered by KatelyaTV Core
-        </div>
-      </div>
-    </div>
-  );
-};
-
 function HomeClient() {
   const [activeTab, setActiveTab] = useState<'home' | 'favorites'>('home');
   const [hotMovies, setHotMovies] = useState<DoubanItem[]>([]);
@@ -345,11 +295,8 @@ function HomeClient() {
   return (
     <PageLayout>
       <div className='px-4 sm:px-8 lg:px-12 py-4 sm:py-8 overflow-visible'>
-        {/* 搜索栏 - 添加在Logo上方 */}
+        {/* 搜索栏 */}
         <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-
-        {/* 主内容区大型 KatelyaTV Logo - 仅在首页显示 */}
-        {activeTab === 'home' && <MainKatelyaLogo />}
 
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
@@ -427,14 +374,11 @@ function HomeClient() {
                   )}
                 </div>
               </section>
-
-              {/* 收藏夹页面底部 Logo */}
-              {!debouncedSearchQuery && <BottomKatelyaLogo />}
             </>
           ) : (
             // 首页视图
             <>
-              {/* 继续观看 - 从文档2中整合过来 */}
+              {/* 继续观看 */}
               {!debouncedSearchQuery && <ContinueWatching />}
 
               {/* 热门电影 */}
@@ -594,7 +538,7 @@ function HomeClient() {
               {/* 无搜索结果提示 */}
               {debouncedSearchQuery && !hasSearchResults && (
                 <div className="text-center py-12">
-                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍🔍</div>
+                  <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">🔍🔍🔍🔍</div>
                   <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">
                     未找到匹配的内容
                   </h3>
@@ -603,9 +547,6 @@ function HomeClient() {
                   </p>
                 </div>
               )}
-
-              {/* 首页底部 Logo */}
-              {!debouncedSearchQuery && <BottomKatelyaLogo />}
             </>
           )}
         </div>
