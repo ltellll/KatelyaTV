@@ -97,34 +97,6 @@ const SearchBar = ({ searchQuery, setSearchQuery }: { searchQuery: string; setSe
   );
 };
 
-// 主内容区大型 KatelyaTV Logo 组件
-const MainKatelyaLogo = () => {
-  return (
-    <div className='main-logo-container'>
-      {/* 背景光效 */}
-      <div className='logo-background-glow'></div>
-
-      {/* 主 Logo */}
-      <div className='main-katelya-logo'>KatelyaTV</div>
-
-      {/* 副标题 */}
-      <div className='mt-3 text-center'>
-        <div className='main-logo-subtitle'>极致影视体验，尽在指尖</div>
-      </div>
-
-      {/* 装饰性粒子效果 */}
-      <div className='logo-particles'>
-        <div className='particle particle-1'></div>
-        <div className='particle particle-2'></div>
-        <div className='particle particle-3'></div>
-        <div className='particle particle-4'></div>
-        <div className='particle particle-5'></div>
-        <div className='particle particle-6'></div>
-      </div>
-    </div>
-  );
-};
-
 // KatelyaTV 底部 Logo 组件
 const BottomKatelyaLogo = () => {
   return (
@@ -138,9 +110,9 @@ const BottomKatelyaLogo = () => {
       </div>
 
       <div className='text-center'>
-        <div className='bottom-logo'>KatelyaTV</div>
+        <div className='bottom-logo'>浅色TV在线免费搜索观看观看平台</div>
         <div className='mt-2 text-sm text-gray-500 dark:text-gray-400 opacity-75'>
-          Powered by KatelyaTV Core
+          Powered by 浅色TV Core
         </div>
       </div>
     </div>
@@ -345,11 +317,8 @@ function HomeClient() {
   return (
     <PageLayout>
       <div className='px-4 sm:px-8 lg:px-12 py-4 sm:py-8 overflow-visible'>
-        {/* 搜索栏 - 添加在Logo上方 */}
+        {/* 搜索栏 - 保持在顶部位置 */}
         <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-
-        {/* 主内容区大型 KatelyaTV Logo - 仅在首页显示 */}
-        {activeTab === 'home' && <MainKatelyaLogo />}
 
         {/* 顶部 Tab 切换 */}
         <div className='mb-8 flex justify-center'>
@@ -434,7 +403,7 @@ function HomeClient() {
           ) : (
             // 首页视图
             <>
-              {/* 继续观看 - 从文档2中整合过来 */}
+              {/* 继续观看 */}
               {!debouncedSearchQuery && <ContinueWatching />}
 
               {/* 热门电影 */}
